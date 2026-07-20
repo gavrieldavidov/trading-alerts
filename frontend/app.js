@@ -299,6 +299,10 @@ function loadChart(stock) {
     ema21Series.setData(e21);
     vwapSeries.setData(vwap);
     volSeries.setData(vols);
+
+    // Set bar spacing so candles are visible (min 4px, ideal 8px per bar)
+    const barSpacing = Math.max(4, Math.min(12, Math.floor(900 / candles.length)));
+    chart.timeScale().applyOptions({ barSpacing });
     chart.timeScale().fitContent();
   } catch (err) {
     console.warn('Chart setData error:', err);
