@@ -300,10 +300,13 @@ function loadChart(stock) {
     vwapSeries.setData(vwap);
     volSeries.setData(vols);
 
-    // Set bar spacing so candles are visible (min 4px, ideal 8px per bar)
-    const barSpacing = Math.max(4, Math.min(12, Math.floor(900 / candles.length)));
-    chart.timeScale().applyOptions({ barSpacing });
-    chart.timeScale().fitContent();
+    // Show last 60 bars (5 hours) so each 5-min candle is clearly visible
+    const total = candles.length;
+    const visibleBars = Math.min(60, total);
+    chart.timeScale().setVisibleLogicalRange({
+      from: total - visibleBars - 0.5,
+      to: total + 2,
+    });
   } catch (err) {
     console.warn('Chart setData error:', err);
   }
