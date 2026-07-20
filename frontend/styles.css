@@ -1,0 +1,98 @@
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #111827; }
+::-webkit-scrollbar-thumb { background: #374151; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+/* Watchlist item */
+.wl-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-left: 2px solid transparent;
+  font-size: 12px;
+}
+.wl-item:hover { background: #1f2937; }
+.wl-item.active {
+  background: #1e3a5f;
+  border-left-color: #3b82f6;
+}
+.wl-item.has-signal {
+  border-left-color: #f59e0b;
+}
+.wl-item.has-signal.buy { border-left-color: #10b981; }
+.wl-item.has-signal.sell { border-left-color: #ef4444; }
+
+.wl-symbol { font-weight: 700; color: #f3f4f6; font-size: 12px; }
+.wl-price { color: #9ca3af; font-size: 11px; font-family: monospace; }
+.wl-change { font-size: 11px; font-family: monospace; font-weight: 600; }
+.wl-change.up { color: #10b981; }
+.wl-change.down { color: #ef4444; }
+.wl-rsi { font-size: 10px; color: #6b7280; }
+
+/* Signal Card */
+.signal-card {
+  background: #0a0e1a;
+  border: 1px solid #1f2937;
+  border-radius: 6px;
+  padding: 10px;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.1s, background 0.1s;
+}
+.signal-card:hover { background: #111827; }
+.signal-card.buy { border-left-color: #10b981; }
+.signal-card.sell { border-left-color: #ef4444; }
+
+.signal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.signal-symbol { font-weight: 700; font-size: 14px; color: #f3f4f6; }
+.signal-badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; }
+.signal-badge.buy { background: #064e3b; color: #10b981; }
+.signal-badge.sell { background: #450a0a; color: #ef4444; }
+.signal-strategy { font-size: 10px; color: #6b7280; margin-bottom: 6px; }
+
+.signal-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 1px 0;
+  color: #9ca3af;
+}
+.signal-row span:last-child { color: #e5e7eb; font-family: monospace; font-weight: 600; }
+
+.signal-row.entry span:last-child { color: #60a5fa; }
+.signal-row.stop span:last-child { color: #f87171; }
+.signal-row.t1 span:last-child { color: #34d399; }
+.signal-row.t2 span:last-child { color: #6ee7b7; }
+.signal-row.rr span:last-child { color: #fbbf24; }
+
+.signal-meta {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #1f2937;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #6b7280;
+}
+
+/* Pulse animation for new signals */
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
+}
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2); }
+}
+.signal-card.new.buy { animation: pulse-green 1s ease 3; }
+.signal-card.new.sell { animation: pulse-red 1s ease 3; }
+
+/* RSI coloring */
+.rsi-hot { color: #ef4444 !important; }
+.rsi-cold { color: #3b82f6 !important; }
+.rsi-warm { color: #10b981 !important; }
