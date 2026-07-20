@@ -238,9 +238,97 @@ def check_rsi_reversal(symbol: str, df: pd.DataFrame) -> Optional[Signal]:
                   curr_rsi, rvol, atr, pos_size, risk)
 
 
+def check_macd_crossover(symbol: str, df: pd.DataFrame) -> Optional[Signal]:
+    import config
+    if len(df) < 30 or "MACD" not in df.columns or "MACD_Signal" not in df.columns:
+        return None
+
+    prev = df.iloc[-2]
+    curr = df.iloc[-1]
+
+    rvol = float(curr.get("RVOL", 0))
+    if rvol < config.VOLUME_RATIO_MACD:
+        return None
+
+    prev_bull = float(prev["MACD"]) > float(prev["MACD_Signal"])
+    curr_bull = float(curr["MACD"]) > float(curr["MACD_Signal"])
+
+    if curr_bull and not prev_bull:
+        direction = "BUY"
+    elif not curr_bull and prev_bull:
+        direction = "SELL"
+    else:
+        return None
+
+    rsi = float(curr["RSI"])
+    # Avoid signals in extreme RSI zones
+    if direction == "BUY" and rsi > 75:
+        return None
+    if direction == "SELL" and rsi < 25:
+        return None
+
+    # MACD cross above zero = stronger signal
+    macd_val = float(curr["MACD"])
+    if direction == "BUY" and macd_val < -0.5:
+        return None
+    if direction == "SELL" and macd_val > 0.5:
+        return None
+
+    entry = float(curr["Close"])
+    atr = float(curr["ATR"])
+    levels = _risk_levels(entry, atr, direction)
+    if not levels:
+        return None
+    stop_loss, target_1, target_2, pos_size, risk = levels
+
+    return Signal(symbol, direction, "MACD_CROSS", entry, stop_loss, target_1, target_2,
+                  rsi, rvol, atr, pos_size, risk)
+
+
+def check_bb_breakout(symbol: str, df: pd.DataFrame) -> Optional[Signal]:
+    import config
+    if len(df) < 25 or "BB_Upper" not in df.columns:
+        return None
+
+    prev = df.iloc[-2]
+    curr = df.iloc[-1]
+
+    rvol = float(curr.get("RVOL", 0))
+    if rvol < config.VOLUME_RATIO_BB:
+        return None
+
+    curr_close = float(curr["Close"])
+    prev_close = float(prev["Close"])
+    bb_upper = float(curr["BB_Upper"])
+    bb_lower = float(curr["BB_Lower"])
+    prev_upper = float(prev["BB_Upper"])
+    prev_lower = float(prev["BB_Lower"])
+    rsi = float(curr["RSI"])
+
+    # Breakout above upper band
+    if curr_close > bb_upper and prev_close <= prev_upper and rsi < 80:
+        direction = "BUY"
+    # Breakdown below lower band
+    elif curr_close < bb_lower and prev_close >= prev_lower and rsi > 20:
+        direction = "SELL"
+    else:
+        return None
+
+    entry = curr_close
+    atr = float(curr["ATR"])
+    levels = _risk_levels(entry, atr, direction)
+    if not levels:
+        return None
+    stop_loss, target_1, target_2, pos_size, risk = levels
+
+    return Signal(symbol, direction, "BB_BREAK", entry, stop_loss, target_1, target_2,
+                  rsi, rvol, atr, pos_size, risk)
+
+
 def generate_signals(symbol: str, df: pd.DataFrame) -> List[Signal]:
     signals = []
-    for checker in [check_ema_crossover, check_vwap_breakout, check_orb_breakout, check_rsi_reversal]:
+    for checker in [check_ema_crossover, check_vwap_breakout, check_orb_breakout,
+                    check_rsi_reversal, check_macd_crossover, check_bb_breakout]:
         try:
             signal = checker(symbol, df)
             if signal:

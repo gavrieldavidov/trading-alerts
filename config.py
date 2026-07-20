@@ -24,9 +24,11 @@ BB_STD = 2.0
 ATR_PERIOD = 14
 
 # סף נפח יחסי לאות כניסה
-VOLUME_RATIO_EMA = 1.5    # מינימום לאות EMA Cross
-VOLUME_RATIO_VWAP = 2.0   # מינימום לאות VWAP Breakout
-VOLUME_RATIO_ORB = 2.0    # מינימום לאות ORB
+VOLUME_RATIO_EMA = 1.0    # מינימום לאות EMA Cross
+VOLUME_RATIO_VWAP = 1.3   # מינימום לאות VWAP Breakout
+VOLUME_RATIO_ORB = 1.3    # מינימום לאות ORB
+VOLUME_RATIO_MACD = 1.0   # מינימום לאות MACD Cross
+VOLUME_RATIO_BB = 1.2     # מינימום לאות Bollinger Band
 
 # פרמטרי Opening Range
 ORB_MINUTES = 15  # 15 דקות ראשונות = 9:30-9:45 ET

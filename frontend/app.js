@@ -165,6 +165,8 @@ const STRATEGY_LABELS = {
   VWAP_BREAK:   'VWAP Breakout',
   ORB:          'Opening Range Breakout',
   RSI_REVERSAL: 'RSI Reversal',
+  MACD_CROSS:   'MACD Crossover',
+  BB_BREAK:     'Bollinger Band Breakout',
 };
 
 function renderSignals(signals) {

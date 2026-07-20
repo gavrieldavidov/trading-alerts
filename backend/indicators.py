@@ -30,6 +30,15 @@ def _volume_ratio(df: pd.DataFrame, window: int = 20) -> pd.Series:
     return (df["Volume"] / avg.replace(0, np.nan)).fillna(1.0)
 
 
+def _vwap_daily(df: pd.DataFrame) -> pd.Series:
+    """VWAP that resets at the start of each trading day."""
+    result = pd.Series(index=df.index, dtype=float)
+    for date, day_df in df.groupby(df.index.date):
+        vwap = calculate_vwap(day_df)
+        result.loc[day_df.index] = vwap.values
+    return result
+
+
 def add_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
     import config
     close = df["Close"]
@@ -38,7 +47,7 @@ def add_all_indicators(df: pd.DataFrame) -> pd.DataFrame:
     df["EMA_21"] = _ema(close, config.EMA_SLOW)
     df["RSI"] = _rsi(close, config.RSI_PERIOD)
     df["ATR"] = _atr(df, config.ATR_PERIOD)
-    df["VWAP"] = calculate_vwap(df)
+    df["VWAP"] = _vwap_daily(df)   # resets each day
     df["RVOL"] = _volume_ratio(df)
 
     # MACD

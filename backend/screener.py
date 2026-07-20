@@ -12,7 +12,12 @@ from backend.signals import generate_signals
 def _df_to_chart_records(df: pd.DataFrame) -> List[Dict]:
     cols = ["Open", "High", "Low", "Close", "Volume",
             "EMA_9", "EMA_21", "VWAP", "RSI", "ATR", "MACD", "MACD_Signal", "MACD_Hist"]
-    sub = df[[c for c in cols if c in df.columns]].tail(120).copy()
+    # Show today's session only so the chart is not compressed by weekend gaps
+    today = df.index[-1].date()
+    today_df = df[df.index.date == today]
+    sub = today_df[[c for c in cols if c in today_df.columns]].copy()
+    if len(sub) == 0:
+        sub = df[[c for c in cols if c in df.columns]].tail(80).copy()
     # Convert timezone-aware datetime index to UNIX seconds
     sub["time"] = sub.index.astype("int64") // 10**9
     records = []
@@ -32,6 +37,11 @@ async def scan_stock(symbol: str) -> Optional[Dict]:
         df = get_intraday_data(symbol, interval="5m", period="2d")
         if df.empty or len(df) < 20:
             return None
+
+        # Drop the last (in-progress) bar when market is open to avoid incomplete volume
+        from backend.data_fetcher import is_market_open
+        if is_market_open() and len(df) > 20:
+            df = df.iloc[:-1]
 
         price = float(df["Close"].iloc[-1])
         if not (config.MIN_PRICE <= price <= config.MAX_PRICE):
