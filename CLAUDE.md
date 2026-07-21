@@ -45,14 +45,16 @@ and fires Telegram alerts for new signals (deduplicated by symbol+strategy+hour 
 
 ## Signal generation (`backend/signals.py`)
 
-Four independent checkers, each returns an optional `Signal` dataclass:
+Six independent checkers, each returns an optional `Signal` dataclass:
 
-| Checker | Trigger condition | Min RVOL |
+| Checker | Trigger condition | Min RVOL config key |
 |---|---|---|
-| `check_ema_crossover` | EMA9 crosses EMA21, RSI not extreme | 1.5× |
-| `check_vwap_breakout` | Price crosses VWAP, RSI confirms direction | 2.0× |
-| `check_orb_breakout` | Price breaks first-15-min range after 9:45 ET | 2.0× |
-| `check_rsi_reversal` | RSI crosses back through 30 or 70 | 1.5× |
+| `check_ema_crossover` | EMA9 crosses EMA21, RSI not extreme | `VOLUME_RATIO_EMA` (1.0) |
+| `check_vwap_breakout` | Price crosses VWAP, RSI confirms direction | `VOLUME_RATIO_VWAP` (1.3) |
+| `check_orb_breakout` | Price breaks first-15-min range after 9:45 ET | `VOLUME_RATIO_ORB` (1.3) |
+| `check_rsi_reversal` | RSI crosses back through 30 or 70 | `VOLUME_RATIO_EMA` (1.0) |
+| `check_macd_crossover` | MACD line crosses Signal line, MACD near zero | `VOLUME_RATIO_MACD` (1.0) |
+| `check_bb_breakout` | Price breaks above BB_Upper or below BB_Lower | `VOLUME_RATIO_BB` (1.2) |
 
 All checkers call `_risk_levels()` which derives stop (1.5× ATR), target_1 (2R), target_2 (3R), and position size from `ACCOUNT_SIZE × RISK_PER_TRADE_PCT / stop_distance`.
 
@@ -68,8 +70,12 @@ All checkers call `_risk_levels()` which derives stop (1.5× ATR), target_1 (2R)
 
 ## Key implementation details
 
-- **VWAP resets daily** — `calculate_vwap()` in `data_fetcher.py` uses `cumsum()` over the entire DataFrame. Fetching `period="2d"` means VWAP accumulates from the start of the dataset, not midnight ET. For intraday VWAP accuracy, the 5m data should start at today's open.
+- **VWAP resets daily** — `_vwap_daily()` in `indicators.py` groups by `df.index.date` and calls `calculate_vwap()` per day, so VWAP resets at midnight ET. The raw `calculate_vwap()` in `data_fetcher.py` is cumulative and should not be called directly on multi-day data.
+- **Incomplete bar dropped** — `scan_stock()` removes `df.iloc[-1]` when `is_market_open()` is true, preventing the in-progress 5-minute bar's low volume from suppressing RVOL to near-zero.
+- **Chart data is today only** — `_df_to_chart_records()` filters to `df.index.date == today` so the chart is never compressed by a weekend gap.
 - **yfinance timestamps** — the index is timezone-aware (ET). `sub.index.astype("int64") // 10**9` produces correct UTC UNIX seconds because pandas stores tz-aware datetimes as UTC internally.
 - **WebSocket protocol** — `app.js` uses `wss://` when the page is served over HTTPS (Cloudflare Tunnel), `ws://` otherwise.
 - **Signal deduplication** — `sent_signal_keys` in `main.py` uses `symbol_strategy_YYYY-MM-DDTHH` as key, so the same setup only fires one Telegram alert per hour.
 - **Chart is initialized lazily** — `initChart()` in `app.js` runs only on the first `loadChart()` call. Subsequent stock selections reuse the same chart instance and call `setData()` to replace series data.
+- **Telegram strategy names** — `telegram_bot.py` has a `STRATEGY_NAMES` dict that maps strategy keys to Hebrew-friendly labels. If a new strategy is added to `signals.py`, add a matching entry there too.
+- **Render.com deployment** — `Procfile` contains `web: python run.py`. PORT env var is read from `os.getenv("PORT", 8000)` in `run.py`.
